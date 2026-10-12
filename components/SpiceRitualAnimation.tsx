@@ -282,14 +282,7 @@ function RealisticSpiceItem({
 
 const EYEBROW = "A Maharashtrian supper club · Northwood, London";
 
-export default function SpiceRitualAnimation() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const reduce = usePrefersReducedMotion();
-  const narrow = useNarrow();
+function PinnedRitual({ narrow }: { narrow: boolean }) {
   const track = useRef<HTMLDivElement>(null);
   const { scrollYProgress: p } = useScroll({
     target: track,
@@ -314,12 +307,12 @@ export default function SpiceRitualAnimation() {
   const sceneScale = useTransform(
     p,
     [0, 0.13, 0.5, 0.74, 0.88],
-    narrow ? [0.92, 1, 1.05, 1.05, 0.88] : [0.82, 1, 1.06, 1.06, 0.66]
+    narrow ? [0.82, 0.9, 0.96, 0.96, 0.74] : [0.82, 1, 1.06, 1.06, 0.66]
   );
   const sceneY = useTransform(
     p,
     [0.74, 0.88],
-    ["0svh", narrow ? "15svh" : "18svh"]
+    ["0svh", narrow ? "18svh" : "18svh"]
   );
 
   // Blend Glow during convergence
@@ -340,12 +333,148 @@ export default function SpiceRitualAnimation() {
   const lineOpacity = useTransform(p, [0.87, 0.93], [0, 1]);
   const lineY = useTransform(p, [0.87, 0.93], ["14px", "0px"]);
 
-  if (!mounted) {
-    return (
-      <section
-        className="ritual"
-        aria-label="Spice & Pangat — the flavours of Maharashtra"
-      >
+  return (
+    <div className="ritual__track" ref={track}>
+      <div className="ritual__sticky">
+        {/* 1. Realistic Banana Leaf */}
+        <motion.div
+          className="ritual__leaf"
+          style={{
+            opacity: leafOpacity,
+            clipPath: leafClip,
+            scaleX: leafScaleX,
+            scale: sceneScale,
+            y: sceneY,
+          }}
+        >
+          <Image
+            src="/images/spice-pangat/banana-leaf.png"
+            alt="Fresh vibrant banana leaf overhead presentation"
+            width={2076}
+            height={757}
+            priority
+            className="ritual__leaf-img"
+          />
+        </motion.div>
+
+        {/* Warm convergence glow */}
+        <motion.div
+          className="ritual__glow"
+          aria-hidden="true"
+          style={{ opacity: glowOpacity }}
+        />
+
+        {/* 2. Realistic Transparent Spices entering from corners */}
+        {REALISTIC_SPICES.map((spice, idx) => (
+          <RealisticSpiceItem
+            key={spice.key}
+            def={spice}
+            index={idx}
+            progress={p}
+          />
+        ))}
+
+        {/* 3. Realistic Maharashtrian Feast reveal on banana leaf */}
+        <motion.div
+          className="ritual__meal"
+          style={{
+            clipPath: mealClip,
+            opacity: mealOpacity,
+            scale: mealScale,
+            y: sceneY,
+          }}
+        >
+          <motion.div
+            style={{ scale: sceneScale }}
+            className="ritual__meal-inner"
+            role="img"
+            aria-label="A traditional Maharashtrian vegetarian thali served on banana leaf"
+          >
+            <Image
+              src="/images/spice-pangat/maharashtrian-thali-banana-leaf.png"
+              alt="A complete Maharashtrian meal served on banana leaf"
+              width={1774}
+              height={887}
+              priority
+              className="ritual__meal-img"
+            />
+          </motion.div>
+        </motion.div>
+
+        {/* Stage A: Intro Title & Sub */}
+        <motion.div
+          className="ritual__intro"
+          style={{ opacity: introOpacity, y: introY }}
+        >
+          <p className="eyebrow">{EYEBROW}</p>
+          <motion.h1
+            className="ritual__title"
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1.2, ease: EASE, delay: 0.1 }}
+          >
+            The flavours of Maharashtra.
+            <br />
+            <em>The feeling of home.</em>
+          </motion.h1>
+          <p className="ritual__sub">
+            Familiar flavours. Shared stories. A little piece of home, brought to the table.
+          </p>
+        </motion.div>
+
+        {/* Scroll Cue */}
+        <motion.div
+          className="ritual__scroll"
+          style={{ opacity: hintOpacity }}
+          aria-hidden="true"
+        >
+          <span>Scroll</span>
+          <i />
+        </motion.div>
+
+        {/* Stage E: Original Spice & Pangat Logo above the meal */}
+        <motion.div
+          className="ritual__logo"
+          style={{ opacity: logoOpacity, y: logoY }}
+        >
+          <Image
+            src={brand.logo.transparent}
+            alt="Spice & Pangat — Maharashtrian Supper Club"
+            width={855}
+            height={680}
+            priority
+            sizes="(max-width: 760px) 88vw, 460px"
+            className="ritual__logo-img"
+          />
+        </motion.div>
+
+        <motion.p
+          className="ritual__line"
+          style={{ opacity: lineOpacity, y: lineY }}
+        >
+          Every spice has a story. Every pangat brings us together.
+        </motion.p>
+      </div>
+    </div>
+  );
+}
+
+export default function SpiceRitualAnimation() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const narrow = useNarrow();
+
+  return (
+    <section
+      className="ritual"
+      aria-label="Spice & Pangat — the flavours of Maharashtra"
+    >
+      {mounted ? (
+        <PinnedRitual narrow={narrow} />
+      ) : (
         <div className="ritual__track">
           <div className="ritual__sticky">
             <div
@@ -384,186 +513,7 @@ export default function SpiceRitualAnimation() {
             </div>
           </div>
         </div>
-      </section>
-    );
-  }
-
-  return (
-    <section
-      className={`ritual${reduce ? " ritual--reduced" : ""}`}
-      aria-label="Spice & Pangat — the flavours of Maharashtra"
-    >
-      <div className="ritual__track" ref={track}>
-        <div className="ritual__sticky">
-          {/* 1. Realistic Banana Leaf */}
-          <motion.div
-            className="ritual__leaf"
-            style={{
-              opacity: leafOpacity,
-              clipPath: leafClip,
-              scaleX: leafScaleX,
-              scale: sceneScale,
-              y: sceneY,
-            }}
-          >
-            <Image
-              src="/images/spice-pangat/banana-leaf.png"
-              alt="Fresh vibrant banana leaf overhead presentation"
-              width={2076}
-              height={757}
-              priority
-              className="ritual__leaf-img"
-            />
-          </motion.div>
-
-          {/* Warm convergence glow */}
-          <motion.div
-            className="ritual__glow"
-            aria-hidden="true"
-            style={{ opacity: glowOpacity }}
-          />
-
-          {/* 2. Realistic Transparent Spices entering from corners */}
-          {REALISTIC_SPICES.map((spice, idx) => (
-            <RealisticSpiceItem
-              key={spice.key}
-              def={spice}
-              index={idx}
-              progress={p}
-            />
-          ))}
-
-          {/* 3. Realistic Maharashtrian Feast reveal on banana leaf */}
-          <motion.div
-            className="ritual__meal"
-            style={{
-              clipPath: mealClip,
-              opacity: mealOpacity,
-              scale: mealScale,
-              y: sceneY,
-            }}
-          >
-            <motion.div
-              style={{ scale: sceneScale }}
-              className="ritual__meal-inner"
-              role="img"
-              aria-label="A traditional Maharashtrian vegetarian thali served on banana leaf"
-            >
-              <Image
-                src="/images/spice-pangat/maharashtrian-thali-banana-leaf.png"
-                alt="A complete Maharashtrian meal served on banana leaf"
-                width={1774}
-                height={887}
-                priority
-                className="ritual__meal-img"
-              />
-            </motion.div>
-          </motion.div>
-
-          {/* Stage A: Intro Title & Sub */}
-          <motion.div
-            className="ritual__intro"
-            style={{ opacity: introOpacity, y: introY }}
-          >
-            <p className="eyebrow">{EYEBROW}</p>
-            <motion.h1
-              className="ritual__title"
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1.2, ease: EASE, delay: 0.1 }}
-            >
-              The flavours of Maharashtra.
-              <br />
-              <em>The feeling of home.</em>
-            </motion.h1>
-            <p className="ritual__sub">
-              Familiar flavours. Shared stories. A little piece of home, brought to the table.
-            </p>
-          </motion.div>
-
-          {/* Scroll Cue */}
-          <motion.div
-            className="ritual__scroll"
-            style={{ opacity: hintOpacity }}
-            aria-hidden="true"
-          >
-            <span>Scroll</span>
-            <i />
-          </motion.div>
-
-          {/* Stage E: Original Spice & Pangat Logo above the meal */}
-          <motion.div
-            className="ritual__logo"
-            style={{ opacity: logoOpacity, y: logoY }}
-          >
-            <Image
-              src={brand.logo.transparent}
-              alt="Spice & Pangat — Maharashtrian Supper Club"
-              width={855}
-              height={680}
-              priority
-              sizes="(max-width: 760px) 88vw, 460px"
-              className="ritual__logo-img"
-            />
-          </motion.div>
-
-          <motion.p
-            className="ritual__line"
-            style={{ opacity: lineOpacity, y: lineY }}
-          >
-            Every spice has a story. Every pangat brings us together.
-          </motion.p>
-        </div>
-      </div>
-
-      {/* Complete static composition for reduced motion & mobile fallback */}
-      <div className="ritual__static">
-        <p className="eyebrow">{EYEBROW}</p>
-        <h1 className="ritual__title">
-          The flavours of Maharashtra.
-          <br />
-          <em>The feeling of home.</em>
-        </h1>
-        <p className="ritual__sub">
-          Familiar flavours. Shared stories. A little piece of home, brought to the table.
-        </p>
-
-        <Image
-          className="ritual__static-logo"
-          src={brand.logo.transparent}
-          alt="Spice & Pangat — Maharashtrian Supper Club"
-          width={855}
-          height={680}
-          sizes="(max-width: 760px) 80vw, 420px"
-        />
-
-        <div
-          className="ritual__static-scene"
-          role="img"
-          aria-label="A Maharashtrian vegetarian meal served on a banana leaf"
-        >
-          <Image
-            src="/images/spice-pangat/banana-leaf.png"
-            alt="Banana leaf base"
-            width={2076}
-            height={757}
-            className="ritual__static-leaf"
-          />
-          <div className="ritual__static-meal">
-            <Image
-              src="/images/spice-pangat/maharashtrian-thali-banana-leaf.png"
-              alt="Maharashtrian meal feast on banana leaf"
-              width={1774}
-              height={887}
-              className="ritual__static-thali"
-            />
-          </div>
-        </div>
-
-        <p className="ritual__line ritual__line--static">
-          Every spice has a story. Every pangat brings us together.
-        </p>
-      </div>
+      )}
     </section>
   );
 }

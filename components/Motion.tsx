@@ -10,7 +10,7 @@ import {
 import { clipReveal, fadeUp, lineUp, VIEWPORT } from "@/lib/motion";
 
 export function MotionProvider({ children }: { children: ReactNode }) {
-  return <MotionConfig reducedMotion="user">{children}</MotionConfig>;
+  return <MotionConfig reducedMotion="never">{children}</MotionConfig>;
 }
 
 /** Fade-up used for body copy. */

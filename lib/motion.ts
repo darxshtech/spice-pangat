@@ -23,4 +23,4 @@ export const clipReveal = {
     transition: { duration: DUR.slow, ease: EASE },
   },
 };
-export const VIEWPORT = { once: true, margin: "-12% 0px -8% 0px" } as const;
+export const VIEWPORT = { once: true, margin: "0px 0px -30px 0px", amount: 0.12 } as const;

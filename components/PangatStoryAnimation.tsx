@@ -7,9 +7,8 @@ import {
   MotionValue,
   useScroll,
   useTransform,
-  useReducedMotion,
 } from "framer-motion";
-import { useMediaQuery } from "./useNarrow";
+import { useMediaQuery, usePrefersReducedMotion } from "./useNarrow";
 
 interface IngredientCardItem {
   key: string;
@@ -132,12 +131,19 @@ const SEATS: TableSeatItem[] = [
 function IngredientCard({
   card,
   progress,
+  isNarrow,
 }: {
   card: IngredientCardItem;
   progress: MotionValue<number>;
+  isNarrow: boolean;
 }) {
-  const x = useTransform(progress, [0, 0.32], [card.from.x, card.to.x]);
-  const y = useTransform(progress, [0, 0.32], [card.from.y, card.to.y]);
+  const fromX = isNarrow ? (card.from.x > 0 ? "65vw" : "-65vw") : `${card.from.x}px`;
+  const toX = isNarrow ? (card.to.x > 0 ? "22vw" : "-22vw") : `${card.to.x}px`;
+  const fromY = isNarrow ? (card.from.y > 0 ? "45vh" : "-45vh") : `${card.from.y}px`;
+  const toY = isNarrow ? (card.to.y > 0 ? "13vh" : "-13vh") : `${card.to.y}px`;
+
+  const x = useTransform(progress, [0, 0.32], [fromX, toX]);
+  const y = useTransform(progress, [0, 0.32], [fromY, toY]);
   const rotate = useTransform(progress, [0, 0.32], [card.from.r, card.to.r]);
   const opacity = useTransform(progress, [0, 0.08, 0.38, 0.48], [0, 1, 1, 0]);
   const scale = useTransform(progress, [0.38, 0.48], [1, 0.8]);
@@ -167,13 +173,15 @@ function TableSeatPlate({
   seat,
   index,
   progress,
+  isNarrow,
 }: {
   seat: TableSeatItem;
   index: number;
   progress: MotionValue<number>;
+  isNarrow: boolean;
 }) {
   // Radius from center of table in vmin
-  const R = 21; // vmin
+  const R = isNarrow ? 23 : 21; // vmin
   const rad = (seat.seatAngleDeg * Math.PI) / 180;
   const targetX = Math.cos(rad) * R;
   const targetY = Math.sin(rad) * R;
@@ -183,25 +191,27 @@ function TableSeatPlate({
 
   // Arc curve calculation
   const curveDir = index % 2 === 0 ? 1 : -1;
-  const midX = (seat.fromOffset[0] + targetX) / 2 + 6 * curveDir;
-  const midY = (seat.fromOffset[1] + targetY) / 2 - 4 * curveDir;
+  const fromX = isNarrow ? (seat.fromOffset[0] > 0 ? 65 : (seat.fromOffset[0] < 0 ? -65 : 0)) : seat.fromOffset[0];
+  const fromY = isNarrow ? (seat.fromOffset[1] > 0 ? 60 : (seat.fromOffset[1] < 0 ? -60 : 0)) : seat.fromOffset[1];
+  const midX = (fromX + targetX) / 2 + (isNarrow ? 3 : 6) * curveDir;
+  const midY = (fromY + targetY) / 2 - (isNarrow ? 2 : 4) * curveDir;
 
   const x = useTransform(
     progress,
     [e, (e + l) / 2, l],
-    [`${seat.fromOffset[0]}vw`, `${midX}vmin`, `${targetX}vmin`]
+    [`${fromX}vw`, `${midX}vmin`, `${targetX}vmin`]
   );
   const y = useTransform(
     progress,
     [e, (e + l) / 2, l],
-    [`${seat.fromOffset[1]}vh`, `${midY}vmin`, `${targetY}vmin`]
+    [`${fromY}vh`, `${midY}vmin`, `${targetY}vmin`]
   );
   const rotate = useTransform(
     progress,
     [e, l],
     [seat.seatAngleDeg + 45, seat.seatAngleDeg + 90]
   );
-  const scale = useTransform(progress, [e, l], [1.4, 1]);
+  const scale = useTransform(progress, [e, l], [isNarrow ? 1.2 : 1.4, 1]);
   const opacity = useTransform(progress, [e, e + 0.05], [0, 1]);
 
   return (
@@ -224,7 +234,13 @@ function TableSeatPlate({
   );
 }
 
-function SharedCommunalTable({ progress }: { progress: MotionValue<number> }) {
+function SharedCommunalTable({
+  progress,
+  isNarrow,
+}: {
+  progress: MotionValue<number>;
+  isNarrow: boolean;
+}) {
   // Table entrance: appears as ingredient cards fade out (0.42 to 0.58)
   const tableOpacity = useTransform(progress, [0.42, 0.52], [0, 1]);
   const tableScale = useTransform(progress, [0.42, 0.72], [0.82, 1]);
@@ -235,7 +251,7 @@ function SharedCommunalTable({ progress }: { progress: MotionValue<number> }) {
 
   // Leaf placemats positioning around 6 seats
   const leafAngles = [-90, -30, 30, 90, 150, 210];
-  const leafRadius = 23; // vmin
+  const leafRadius = isNarrow ? 24 : 23; // vmin
 
   return (
     <motion.div
@@ -327,13 +343,14 @@ function SharedCommunalTable({ progress }: { progress: MotionValue<number> }) {
           seat={seat}
           index={idx}
           progress={progress}
+          isNarrow={isNarrow}
         />
       ))}
     </motion.div>
   );
 }
 
-function PinnedSequence() {
+function PinnedSequence({ isNarrow }: { isNarrow: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -386,11 +403,11 @@ function PinnedSequence() {
 
         {/* 1. Floating Ingredient Cards (Phase 1) */}
         {CARDS.map((card) => (
-          <IngredientCard key={card.key} card={card} progress={scrollYProgress} />
+          <IngredientCard key={card.key} card={card} progress={scrollYProgress} isNarrow={isNarrow} />
         ))}
 
         {/* 2. Realistic Shared Communal Table Animation (Phase 2 & Climax) */}
-        <SharedCommunalTable progress={scrollYProgress} />
+        <SharedCommunalTable progress={scrollYProgress} isNarrow={isNarrow} />
 
         {/* 3. Final Statement & Booking CTA */}
         <motion.div
@@ -545,7 +562,7 @@ export default function PangatStoryAnimation() {
   }, []);
 
   const isNarrow = useMediaQuery("(max-width: 860px)");
-  const prefersReduced = useReducedMotion();
+  const prefersReduced = usePrefersReducedMotion();
 
   if (!mounted) {
     return (
@@ -565,7 +582,7 @@ export default function PangatStoryAnimation() {
       id="ingredients-to-pangat"
       aria-label="A Shared Table — From Ingredients to a Pangat"
     >
-      {isNarrow || prefersReduced ? <StaticFallback /> : <PinnedSequence />}
+      {prefersReduced ? <StaticFallback /> : <PinnedSequence isNarrow={isNarrow} />}
     </section>
   );
 }
